@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Pro Tool</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css">
+    <style>
+        body { max-width: 800px; margin: auto; padding: 20px; background-color: #040520; }
+        .main-menu { display: flex; gap: 15px; justify-content: center; margin-bottom: 30px; flex-wrap: wrap; }
+        .menu-btn { padding: 15px 25px; cursor: pointer; border-radius: 8px; border: none; background: #007bff; color: white; font-weight: bold; transition: 0.3s; }
+        .menu-btn:hover { background: #0056b3; transform: scale(1.05); }
+        .window { display: none; background: rgb(70, 14, 17); padding: 25px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .active { display: block !important; animation: fadeIn 0.4s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .input-group { margin-bottom: 15px; }
+        label { font-weight: bold; display: block; margin-bottom: 5px; }
+        .ad-space { background: #9edd16; height: 90px; margin-top: 20px; text-align: center; line-height: 90px; color: #666; border-radius: 8px; }
+    </style>
+</head>
+<body>
+
+    <h1>🎓 Student Pro Utility Kit</h1>
+
+    <div class="main-menu">
+        <button class="menu-btn" onclick="showWindow('photoWin')">📷 Photo/Sign Resizer</button>
+        <button class="menu-btn" onclick="showWindow('aadhaarWin')" style="background:#28a745;">🔓 Aadhaar Unlocker</button>
+        <button class="menu-btn" onclick="showWindow('infoWin')" style="background:#6c757d;">ℹ️ Help/Info</button>
+        <button class="menu-btn" onclick="showWindow('signWin')" style="background:#f39c12;">✍️ Signature Maker</button>
+        <button class="menu-btn" onclick="showWindow('pdfToolsWin')" style="background:#e74c3c;">📄 PDF Expert Tools</button>
+    </div>
+
+    <div id="photoWin" class="window active">
+        <h2>📷 Photo & Signature Expert</h2>
+        <div class="input-group">
+            <label>Photo Select Karein:</label>
+            <input type="file" id="imageInput" accept="image/*">
+        </div>
+        <label>Dimensions:</label>
+        <div style="display:flex; gap:10px;">
+            <input type="number" id="widthInput" placeholder="Width">
+            <input type="number" id="heightInput" placeholder="Height">
+            <select id="unitInput">
+                <option value="px">Pixels</option>
+                <option value="cm">CM</option>
+                <option value="mm">MM</option>
+            </select>
+        </div>
+        <div class="input-group" style="margin-top:20px;">
+            <label>Target File Size:</label>
+            <div style="display:flex; gap:10px;">
+                <input type="number" id="targetSize" placeholder="E.g. 50">
+                <select id="sizeUnit">
+                    <option value="kb">KB</option>
+                    <option value="mb">MB</option>
+                </select>
+            </div>
+            <div class="input-group" style="margin-top:20px;">
+    <label>File Ka Naam aur Format:</label>
+    <div style="display:flex; gap:10px;">
+        <input type="text" id="fileName" placeholder="File Name (e.g. MyPhoto)" style="flex: 2;">
+        <select id="fileExtension" style="flex: 1;">
+            <option value="image/jpeg">.jpg</option>
+            <option value="image/jpeg">.jpeg</option>
+            <option value="image/png">.png</option>
+            <option value="image/webp">.webp</option>
+        </select>
+    </div>
+</div>
+        </div>
+        <button onclick="processImage()" style="width:100%; margin-top:10px;">Apply & Download</button>
+    </div>
+
+    <div id="aadhaarWin" class="window">
+        <h2>🔓 Aadhaar PDF Unlocker</h2>
+        <div class="input-group">
+            <label>Locked Aadhaar PDF:</label>
+            <input type="file" id="pdfInput" accept="application/pdf">
+        </div>
+        <div class="input-group">
+            <label>Password:</label>
+            <input type="password" id="pdfPassword" placeholder="E.g. RUPA1998">
+        </div>
+        <button id="unlockBtn" onclick="handleAadhaar()" style="width:100%; background-color: #28a745; color:white; border:none; padding:12px; border-radius:5px;">Remove Password & Save</button>
+    </div>
+
+    <div id="infoWin" class="window">
+        <h2>ℹ️ Guide</h2>
+        <p>Aadhaar password format: <b>NAAM ke pehle 4 letters + Birth Year</b> (Example: BHAN2009)</p>
+    </div>
+    <div id="infoWin" class="window">
+        <h2>ℹ️ Guide</h2>
+        <p>Aadhaar password format: <b>NAAM ke pehle 4 letters + Birth Year</b></p>
+    </div>
+
+    <div id="pdfToolsWin" class="window">
+        <h2>📄 Advanced PDF Tools</h2>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div style="border: 1px solid #ddd; padding: 10px; border-radius: 8px;">
+                <h4>Convert TO PDF</h4>
+                <button onclick="alert('JPG to PDF Active!')" style="font-size: 12px; padding: 5px; width: 100%;">JPG to PDF</button>
+                <button disabled style="font-size: 12px; padding: 5px; background: #ccc; width: 100%;">Word to PDF</button>
+            </div>
+            
+            <div style="border: 1px solid #ddd; padding: 10px; border-radius: 8px;">
+                <h4>Convert FROM PDF</h4>
+                <button onclick="alert('Feature Coming Soon!')" style="font-size: 12px; padding: 5px; width: 100%;">PDF to JPG</button>
+                <button disabled style="font-size: 12px; padding: 5px; background: #ccc; width: 100%;">PDF to Word</button>
+            </div>
+        </div>
+
+        <div style="margin-top: 20px; border: 2px dashed #e74c3c; padding: 15px; border-radius: 8px;">
+            <h4>🛠️ Quick Merge PDF (Multi-Select)</h4>
+            <input type="file" id="mergeInput" accept="application/pdf" multiple>
+            <button onclick="mergePDFFiles()" style="width:100%; background:#e74c3c; color:white; margin-top:10px;">Merge & Download</button>
+        </div>
+    </div>
+    <div class="ad-space">Google Ads Section</div>
+
+    <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
+    ...
+    <div id="signWin" class="window">
+    <h2>✍️ Digital Signature Maker</h2>
+    <p>Apna naam likhein aur signature download karein:</p>
+    <input type="text" id="signName" placeholder="Apna Naam Likhein">
+    <select id="fontStyle">
+        <option value="cursive">Cursive (Style 1)</option>
+        <option value="serif">Professional (Style 2)</option>
+    </select>
+    <button onclick="makeSignature()" style="width:100%; background:#f39c12; color:white;">Generate Signature</button>
+    <canvas id="signCanvas" style="border:1px solid #ccc; margin-top:10px; background:white; display:none;"></canvas>
+</div>
+
+    <div class="ad-space">Google Ads Section</div>
+
+    <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
+    
+    <script>
+        // Window Switcher
+        function showWindow(winId) {
+            const windows = document.getElementsByClassName('window');
+            for (let i = 0; i < windows.length; i++) {
+                windows[i].classList.remove('active');
+            }
+            document.getElementById(winId).classList.add('active');
+        }
+
+        // Photo Logic
+ async function processImage() {
+    const fileInput = document.getElementById('imageInput');
+    const width = parseInt(document.getElementById('widthInput').value);
+    const height = parseInt(document.getElementById('heightInput').value);
+    const unit = document.getElementById('unitInput').value;
+    const targetKB = parseInt(document.getElementById('targetSize').value);
+    const sizeUnit = document.getElementById('sizeUnit').value;
+    
+    // Naye inputs
+    const customName = document.getElementById('fileName').value || "Resized_Image";
+    const mimeType = document.getElementById('fileExtension').value;
+    const extLabel = document.getElementById('fileExtension').options[document.getElementById('fileExtension').selectedIndex].text;
+
+    if (!fileInput.files[0] || !width || !height) {
+        alert("Photo aur dimensions zaroori hain!");
+        return;
+    }
+
+    let targetBytes = targetKB * 1024;
+    if (sizeUnit === 'mb') targetBytes *= 1024;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+            const canvas = document.createElement('canvas');
+            let tW = width, tH = height;
+            if (unit === "cm") { tW *= 37.795; tH *= 37.795; }
+            else if (unit === "mm") { tW *= 3.7795; tH *= 3.7795; }
+
+            canvas.width = tW; canvas.height = tH;
+            const ctx = canvas.getContext('2d');
+            
+            // Background white (PNG ke liye transparent bhi rakh sakte ho, par white safe hai)
+            ctx.fillStyle = "white"; 
+            ctx.fillRect(0, 0, tW, tH);
+            ctx.drawImage(img, 0, 0, tW, tH);
+
+            canvas.toBlob(async (blob) => {
+                let currentBlob = blob;
+
+                // FORCE KB LOGIC: Agar size kam hai toh random data add karna
+                if (targetKB && currentBlob.size < targetBytes) {
+                    const paddingSize = targetBytes - currentBlob.size;
+                    const padding = new Uint8Array(paddingSize);
+                    for (let i = 0; i < paddingSize; i++) { padding[i] = Math.random() * 255; }
+                    currentBlob = new Blob([currentBlob, padding], { type: mimeType });
+                }
+
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(currentBlob);
+                
+                // User ka diya hua naam + Extension
+                link.download = customName + extLabel;
+                link.click();
+
+                alert(`File Saved: ${customName}${extLabel}\nExact Size: ${(currentBlob.size / 1024).toFixed(2)} KB`);
+
+            }, mimeType, 0.95); 
+        };
+        img.src = e.target.result;
+    };
+    reader.readAsDataURL(fileInput.files[0]);
+}
+        // Aadhaar Logic - Fixed Function
+        async function handleAadhaar() {
+            const fileInput = document.getElementById('pdfInput');
+            const password = document.getElementById('pdfPassword').value;
+            const btn = document.getElementById('unlockBtn');
+
+            if (!fileInput.files[0] || !password) {
+                alert("Pehle file select karein aur password daalein!");
+                return;
+            }
+
+            btn.innerText = "Processing...";
+            btn.disabled = true;
+
+            try {
+                const arrayBuffer = await fileInput.files[0].arrayBuffer();
+                const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer, { password: password });
+                const pdfBytes = await pdfDoc.save();
+
+                const blob = new Blob([pdfBytes], { type: "application/pdf" });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = "Unlocked_Aadhaar.pdf";
+                link.click();
+                
+                alert("Success! Password hat gaya.");
+            } catch (err) {
+                alert("Error: Shayad password galat hai.");
+                console.error(err);
+            } finally {
+                btn.innerText = "Remove Password & Save";
+                btn.disabled = false;
+            }
+        }
+        function makeSignature() {
+    const name = document.getElementById('signName').value;
+    const font = document.getElementById('fontStyle').value;
+    const canvas = document.getElementById('signCanvas');
+    const ctx = canvas.getContext('2d');
+
+    if(!name) return alert("Pehle naam likhein!");
+
+    canvas.width = 400;
+    canvas.height = 150;
+    canvas.style.display = "block";
+
+    // White Background
+    ctx.fillStyle = "white";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Signature Style
+    ctx.fillStyle = "blue"; // Blue ink color
+    ctx.font = font === "cursive" ? "40px 'Brush Script MT', cursive" : "40px serif";
+    ctx.textAlign = "center";
+    ctx.fillText(name, 200, 85);
+
+    // Auto Download
+    const link = document.createElement('a');
+    link.href = canvas.toDataURL('image/png');
+    link.download = "My_Signature.png";
+    link.click();
+}async function mergePDFFiles() {
+    const fileInput = document.getElementById('mergeInput');
+    if (fileInput.files.length < 2) {
+        alert("Kam se kam 2 PDF files select karein merge karne ke liye!");
+        return;
+    }
+
+    const mergedPdf = await PDFLib.PDFDocument.create();
+    
+    for (const file of fileInput.files) {
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await PDFLib.PDFDocument.load(arrayBuffer);
+        const copiedPages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
+        copiedPages.forEach((page) => mergedPdf.addPage(page));
+    }
+
+    const pdfBytes = await mergedPdf.save();
+    const blob = new Blob([pdfBytes], { type: "application/pdf" });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = "Merged_Document.pdf";
+    link.click();
+    alert("Files Merge Ho Gayi Hain!");
+}
+    </script>
+</body>
+</html>
