@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pro Studio - Mixed Size & Postcard Fix</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+    
+    <style>
+        body { font-family: 'Inter', sans-serif; background: #0f172a; color: white; }
+        #paperPreview { 
+            background: white; margin: 20px auto; 
+            box-shadow: 0 10px 40px rgba(0,0,0,0.6); 
+            position: relative; overflow: hidden; border: 2px solid #3b82f6;
+        }
+        .photo-box { 
+            position: absolute; border: 1px solid #000; 
+            background-size: cover; display: flex; flex-direction: column; 
+            align-items: center; justify-content: flex-end; box-sizing: border-box;
+        }
+        .label-text { 
+            color: black; font-size: 6px; font-weight: bold; 
+            background: rgba(255,255,255,0.95); width: 100%; 
+            text-align: center; line-height: 1.1; padding: 1px 0; border-top: 1px solid #000;
+        }
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 100; display: none; align-items: center; justify-content: center; padding: 15px; }
+        .modal-content { background: #1e293b; padding: 20px; border-radius: 16px; max-width: 450px; width: 100%; }
+        .cropper-container { max-height: 380px; background: #000; border-radius: 8px; overflow: hidden; }
+    </style>
+</head>
+<body class="p-4">
+
+    <div class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- sidebar -->
+        <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 h-fit space-y-5 shadow-2xl">
+            <h2 class="text-2xl font-bold text-blue-400 border-b border-slate-700 pb-3">Smart Mix Studio</h2>
+            
+            <div class="space-y-4">
+                <div class="flex gap-2">
+                    <select id="paperSize" class="flex-1 bg-slate-900 border border-slate-600 p-3 rounded-lg text-sm" onchange="updatePaper()">
+                        <option value="A4">A4 Paper</option>
+                        <option value="A5">A5 Paper</option>
+                        <option value="A6">A6 Paper</option>
+                    </select>
+                    <select id="paperOrient" class="flex-1 bg-slate-900 border border-slate-600 p-3 rounded-lg text-sm" onchange="updatePaper()">
+                        <option value="p">Portrait</option>
+                        <option value="l">Landscape</option>
+                    </select>
+                </div>
+
+                <div class="bg-slate-900/50 p-4 rounded-xl border border-slate-700 space-y-3">
+                    <p class="text-xs font-bold text-slate-400 uppercase">Add Photo To Sheet</p>
+                    <select id="photoType" class="w-full bg-slate-900 border border-slate-600 p-2 rounded text-sm">
+                        <option value="35-45">Passport (3.5x4.5 cm)</option>
+                        <option value="30-40">Ticket (3x4 cm)</option>
+                        <option value="101-152">Postcard (4x6 inch)</option>
+                    </select>
+                    <div class="grid grid-cols-2 gap-2">
+                        <input type="text" id="userName" placeholder="Name" class="bg-slate-900 p-2 rounded text-xs border border-slate-700">
+                        <input type="text" id="userDOP" placeholder="Date" class="bg-slate-900 p-2 rounded text-xs border border-slate-700">
+                    </div>
+                    <input type="number" id="copies" value="1" min="1" class="w-full bg-slate-900 p-2 rounded text-sm border border-slate-700">
+                    
+                    <input type="file" id="imgInp" class="hidden" accept="image/*">
+                    <button onclick="document.getElementById('imgInp').click()" class="w-full bg-blue-600 py-2 rounded font-bold">Add This Photo</button>
+                </div>
+            </div>
+
+            <div class="pt-4 space-y-3">
+                <button onclick="clearSheet()" class="w-full bg-red-600/20 text-red-400 py-2 rounded font-bold border border-red-900/50">Clear Sheet</button>
+                <button onclick="downloadPDF()" class="w-full bg-emerald-600 py-3 rounded-xl font-bold">📥 Download Print PDF</button>
+            </div>
+        </div>
+
+        <!-- Main Preview -->
+        <div class="lg:col-span-2 flex flex-col items-center">
+            <div id="paperPreview"></div>
+        </div>
+    </div>
+
+    <!-- Crop Modal -->
+    <div id="cropModal" class="modal">
+        <div class="modal-content">
+            <div class="cropper-container mb-4"><img id="cropImgTarget" src=""></div>
+            <div class="grid grid-cols-2 gap-3 mb-5">
+                <button onclick="cropper.rotate(-90)" class="bg-slate-700 py-2 rounded">↺ Left</button>
+                <button onclick="cropper.rotate(90)" class="bg-slate-700 py-2 rounded">↻ Right</button>
+            </div>
+            <button onclick="applyCrop()" class="w-full bg-blue-600 py-3 rounded-xl font-bold">Apply & Add</button>
+        </div>
+    </div>
+
+    <script>
+        const { jsPDF } = window.jspdf;
+        let cropper = null;
+        let photoQueue = []; // Sari photos yahan store hongi
+        
+        const paperDims = { 'A4': { w: 210, h: 297 }, 'A5': { w: 148, h: 210 }, 'A6': { w: 105, h: 148 } };
+
+        function updatePaper() {
+            const size = document.getElementById('paperSize').value;
+            const orient = document.getElementById('paperOrient').value;
+            let w = paperDims[size].w; let h = paperDims[size].h;
+            if(orient === 'l') [w, h] = [h, w];
+            const scale = 1.4;
+            const preview = document.getElementById('paperPreview');
+            preview.style.width = (w * scale) + "px";
+            preview.style.height = (h * scale) + "px";
+            renderPreview();
+        }
+
+        document.getElementById('imgInp').onchange = e => {
+            const file = e.target.files[0];
+            if(!file) return;
+            const reader = new FileReader();
+            reader.onload = event => {
+                document.getElementById('cropImgTarget').src = event.target.result;
+                document.getElementById('cropModal').style.display = 'flex';
+                if(cropper) cropper.destroy();
+                const dim = document.getElementById('photoType').value.split('-');
+                cropper = new Cropper(document.getElementById('cropImgTarget'), {
+                    aspectRatio: dim[0] / dim[1], viewMode: 1
+                });
+            };
+            reader.readAsDataURL(file);
+        };
+
+        function applyCrop() {
+            const base64 = cropper.getCroppedCanvas({ width: 600 }).toDataURL('image/jpeg', 0.9);
+            const type = document.getElementById('photoType').value.split('-');
+            const copies = parseInt(document.getElementById('copies').value);
+            const name = document.getElementById('userName').value;
+            const dop = document.getElementById('userDOP').value;
+
+            for(let i=0; i<copies; i++) {
+                photoQueue.push({ img: base64, w: parseInt(type[0]), h: parseInt(type[1]), name, dop });
+            }
+            
+            document.getElementById('cropModal').style.display = 'none';
+            renderPreview();
+        }
+
+        function renderPreview() {
+            const preview = document.getElementById('paperPreview');
+            preview.innerHTML = '';
+            const size = document.getElementById('paperSize').value;
+            const orient = document.getElementById('paperOrient').value;
+            let paperW = paperDims[size].w; if(orient === 'l') paperW = paperDims[size].h;
+
+            let x = 7; let y = 7;
+            const scale = 1.4;
+
+            photoQueue.forEach(item => {
+                const box = document.createElement('div');
+                box.className = "photo-box";
+                box.style.width = (item.w * scale) + "px";
+                box.style.height = (item.h * scale) + "px";
+                box.style.left = (x * scale) + "px";
+                box.style.top = (y * scale) + "px";
+                box.style.backgroundImage = `url(${item.img})`;
+
+                if(item.name || item.dop) {
+                    const label = document.createElement('div');
+                    label.className = "label-text";
+                    label.innerHTML = `${item.name}<br>${item.dop}`;
+                    box.appendChild(label);
+                }
+
+                preview.appendChild(box);
+                x += item.w + 4;
+                if((x + item.w) > paperW - 5) { x = 7; y += item.h + 5; }
+            });
+        }
+
+        function clearSheet() { photoQueue = []; renderPreview(); }
+
+        function downloadPDF() {
+            if(photoQueue.length === 0) return alert("Sheet khaali hai!");
+            const size = document.getElementById('paperSize').value;
+            const orient = document.getElementById('paperOrient').value;
+            const pdf = new jsPDF(orient, 'mm', size.toLowerCase());
+            let paperW = pdf.internal.pageSize.getWidth();
+            let x = 10; let y = 10;
+
+            photoQueue.forEach(item => {
+                pdf.setDrawColor(0); pdf.rect(x, y, item.w, item.h);
+                pdf.addImage(item.img, 'JPEG', x, y, item.w, item.h);
+                if(item.name || item.dop) {
+                    pdf.setFillColor(255); pdf.rect(x+0.1, y+item.h-7, item.w-0.2, 6.9, 'F');
+                    pdf.setFontSize(6); pdf.text(item.name, x+item.w/2, y+item.h-4, {align:'center'});
+                    pdf.text(item.dop, x+item.w/2, y+item.h-1, {align:'center'});
+                }
+                x += item.w + 4;
+                if(x + item.w > paperW - 8) { x = 10; y += item.h + 5; }
+            });
+            pdf.save("Smart_Studio_Mix.pdf");
+        }
+        updatePaper();
+    </script>
+</body>
+</html>
