@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Pro Photo Studio - Smart Layout Tool</title>
+    <title>Pro Photo Studio - Border & Print Fixed</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet" />
@@ -17,23 +17,25 @@
             box-shadow: 0 10px 40px rgba(0,0,0,0.6); 
             position: relative; 
             overflow: hidden; 
-            border: 1px solid #94a3b8;
+            border: 2px solid #3b82f6;
             transition: all 0.4s ease;
         }
         .photo-box { 
             position: absolute; 
-            border: 0.1px solid #ccc; 
+            /* Border Fixed: Yahan black border add kiya hai */
+            border: 1px solid #000; 
             background-size: cover; 
             display: flex; 
             flex-direction: column; 
             align-items: center; 
             justify-content: flex-end; 
+            box-sizing: border-box;
         }
         .label-text { 
             color: black; font-size: 7px; font-weight: bold; 
             background: rgba(255,255,255,0.95); width: 100%; 
             text-align: center; line-height: 1.2; padding: 1px 0;
-            border-top: 0.5px solid #000;
+            border-top: 1px solid #000;
         }
         .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 100; display: none; align-items: center; justify-content: center; padding: 15px; }
         .modal-content { background: #1e293b; padding: 20px; border-radius: 16px; max-width: 450px; width: 100%; }
@@ -51,7 +53,7 @@
         
         <!-- sidebar: Controls -->
         <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 h-fit space-y-5 shadow-2xl">
-            <h2 class="text-2xl font-bold text-blue-400 border-b border-slate-700 pb-3">Smart Studio</h2>
+            <h2 class="text-2xl font-bold text-blue-400 border-b border-slate-700 pb-3">Smart Studio Pro</h2>
             
             <div class="space-y-4">
                 <div>
@@ -80,7 +82,7 @@
 
                 <div class="grid grid-cols-2 gap-2">
                     <input type="text" id="userName" placeholder="Name" class="bg-slate-900 border border-slate-600 p-3 rounded-lg text-sm" oninput="updatePreview()">
-                    <input type="text" id="userDOP" placeholder="Date" class="bg-slate-900 border border-slate-600 p-3 rounded-lg text-sm" oninput="updatePreview()">
+                    <input type="text" id="userDOP" placeholder="Date/DOP" class="bg-slate-900 border border-slate-600 p-3 rounded-lg text-sm" oninput="updatePreview()">
                 </div>
 
                 <div>
@@ -98,7 +100,7 @@
 
         <!-- Main Preview -->
         <div class="lg:col-span-2 flex flex-col items-center">
-            <p class="text-xs text-slate-400 mb-4 uppercase tracking-widest">Live Canvas Preview</p>
+            <p class="text-xs text-slate-400 mb-4 uppercase tracking-widest">Live Canvas Preview (With Borders)</p>
             <div id="paperPreview"></div>
         </div>
     </div>
@@ -138,13 +140,10 @@
             const size = document.getElementById('paperSize').value;
             const orient = document.getElementById('paperOrient').value;
             const preview = document.getElementById('paperPreview');
-            
             let w = paperDims[size].w;
             let h = paperDims[size].h;
-            
             if(orient === 'l') { [w, h] = [h, w]; }
-
-            const scale = 1.4; // Screen zoom
+            const scale = 1.4; 
             preview.style.width = (w * scale) + "px";
             preview.style.height = (h * scale) + "px";
             updatePreview();
@@ -194,7 +193,8 @@
             const name = document.getElementById('userName').value;
             const dop = document.getElementById('userDOP').value;
 
-            let x = 7; let y = 7;
+            // Margin aur Spacing set kiya hai
+            let x = 10; let y = 10;
             const scale = 1.4;
 
             for(let i=0; i < copies; i++) {
@@ -214,8 +214,9 @@
                 }
 
                 preview.appendChild(box);
-                x += pw + 3;
-                if((x + pw) > paperW - 5) { x = 7; y += ph + 4; }
+                // Photos ke beech mein 4mm ka gap
+                x += pw + 4; 
+                if((x + pw) > paperW - 8) { x = 10; y += ph + 6; }
             }
         }
 
@@ -233,20 +234,26 @@
             let x = 10; let y = 10;
 
             for(let i=0; i < copies; i++) {
+                // PDF mein saaf border ke liye rectangle
+                pdf.setDrawColor(0, 0, 0);
+                pdf.setLineWidth(0.2);
+                pdf.rect(x, y, pw, ph);
+                
                 pdf.addImage(croppedBase64, 'JPEG', x, y, pw, ph);
                 const name = document.getElementById('userName').value;
                 const dop = document.getElementById('userDOP').value;
                 if(name || dop) {
                     pdf.setFillColor(255, 255, 255);
-                    pdf.rect(x, y + ph - 8, pw, 8, 'F');
+                    pdf.rect(x + 0.2, y + ph - 8, pw - 0.4, 7.8, 'F');
                     pdf.setFontSize(7);
+                    pdf.setTextColor(0);
                     pdf.text(name, x + pw/2, y + ph - 5, { align: 'center' });
                     pdf.text(dop, x + pw/2, y + ph - 2, { align: 'center' });
                 }
-                x += pw + 4;
-                if(x + pw > paperW - 10) { x = 10; y += ph + 5; }
+                x += pw + 5;
+                if(x + pw > paperW - 8) { x = 10; y += ph + 6; }
             }
-            pdf.save("Studio_Print.pdf");
+            pdf.save("Studio_Print_Bordered.pdf");
         }
         updatePaper();
     </script>
