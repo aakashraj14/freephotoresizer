@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pro Photo Studio - Smart Layout Tool</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+    
+    <style>
+        body { font-family: 'Inter', sans-serif; background: #0f172a; color: white; }
+        #paperPreview { 
+            background: white; 
+            margin: 20px auto; 
+            box-shadow: 0 10px 40px rgba(0,0,0,0.6); 
+            position: relative; 
+            overflow: hidden; 
+            border: 1px solid #94a3b8;
+            transition: all 0.4s ease;
+        }
+        .photo-box { 
+            position: absolute; 
+            border: 0.1px solid #ccc; 
+            background-size: cover; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: flex-end; 
+        }
+        .label-text { 
+            color: black; font-size: 7px; font-weight: bold; 
+            background: rgba(255,255,255,0.95); width: 100%; 
+            text-align: center; line-height: 1.2; padding: 1px 0;
+            border-top: 0.5px solid #000;
+        }
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 100; display: none; align-items: center; justify-content: center; padding: 15px; }
+        .modal-content { background: #1e293b; padding: 20px; border-radius: 16px; max-width: 450px; width: 100%; }
+        .cropper-container { max-height: 380px; background: #000; border-radius: 8px; overflow: hidden; }
+    </style>
+</head>
+<body class="p-4">
+
+    <!-- Future Ad Section -->
+    <div class="max-w-6xl mx-auto h-16 bg-slate-800/40 border border-dashed border-slate-600 rounded-xl mb-6 flex items-center justify-center text-slate-500 text-xs italic">
+        PUBLICITY / AD BANNER SPACE
+    </div>
+
+    <div class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        <!-- sidebar: Controls -->
+        <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 h-fit space-y-5 shadow-2xl">
+            <h2 class="text-2xl font-bold text-blue-400 border-b border-slate-700 pb-3">Smart Studio</h2>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 uppercase mb-2">Paper Settings</label>
+                    <div class="flex gap-2">
+                        <select id="paperSize" class="flex-1 bg-slate-900 border border-slate-600 p-3 rounded-lg text-sm" onchange="updatePaper()">
+                            <option value="A4">A4 Paper</option>
+                            <option value="A5">A5 Paper</option>
+                            <option value="A6">A6 Paper</option>
+                        </select>
+                        <select id="paperOrient" class="flex-1 bg-slate-900 border border-slate-600 p-3 rounded-lg text-sm" onchange="updatePaper()">
+                            <option value="p">Portrait</option>
+                            <option value="l">Landscape</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 uppercase mb-2">Photo Type</label>
+                    <select id="photoSize" class="w-full bg-slate-900 border border-slate-600 p-3 rounded-lg text-sm" onchange="updatePreview()">
+                        <option value="35-45">Passport (3.5x4.5 cm)</option>
+                        <option value="101-152">Postcard (4x6 inch)</option>
+                        <option value="30-40">Ticket (3x4 cm)</option>
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <input type="text" id="userName" placeholder="Name" class="bg-slate-900 border border-slate-600 p-3 rounded-lg text-sm" oninput="updatePreview()">
+                    <input type="text" id="userDOP" placeholder="Date" class="bg-slate-900 border border-slate-600 p-3 rounded-lg text-sm" oninput="updatePreview()">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 uppercase mb-2">Copies</label>
+                    <input type="number" id="copies" value="8" min="1" max="60" class="w-full bg-slate-900 border border-slate-600 p-3 rounded-lg text-sm" onchange="updatePreview()">
+                </div>
+            </div>
+
+            <div class="pt-4 space-y-3">
+                <input type="file" id="imgInp" class="hidden" accept="image/*">
+                <button onclick="document.getElementById('imgInp').click()" class="w-full bg-blue-600 hover:bg-blue-500 py-3 rounded-xl font-bold transition-all shadow-lg shadow-blue-900/30">📁 Select & Crop Photo</button>
+                <button onclick="downloadPDF()" class="w-full bg-emerald-600 hover:bg-emerald-500 py-3 rounded-xl font-bold transition-all shadow-lg shadow-emerald-900/30">📥 Download Print PDF</button>
+            </div>
+        </div>
+
+        <!-- Main Preview -->
+        <div class="lg:col-span-2 flex flex-col items-center">
+            <p class="text-xs text-slate-400 mb-4 uppercase tracking-widest">Live Canvas Preview</p>
+            <div id="paperPreview"></div>
+        </div>
+    </div>
+
+    <!-- Crop & Rotate Modal -->
+    <div id="cropModal" class="modal">
+        <div class="modal-content">
+            <h3 class="text-lg font-bold mb-4 text-center">Adjust Photo</h3>
+            <div class="cropper-container mb-4">
+                <img id="cropImgTarget" src="">
+            </div>
+            
+            <div class="grid grid-cols-2 gap-3 mb-5">
+                <button onclick="rotatePhoto(-90)" class="bg-slate-700 py-2 rounded-lg hover:bg-slate-600">↺ Rotate Left</button>
+                <button onclick="rotatePhoto(90)" class="bg-slate-700 py-2 rounded-lg hover:bg-slate-600">↻ Rotate Right</button>
+            </div>
+
+            <div class="flex gap-3">
+                <button onclick="closeModal()" class="flex-1 bg-slate-600 py-3 rounded-xl font-semibold">Cancel</button>
+                <button onclick="applyCrop()" class="flex-1 bg-blue-600 py-3 rounded-xl font-bold">Apply Crop</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { jsPDF } = window.jspdf;
+        let cropper = null;
+        let croppedBase64 = null;
+        
+        const paperDims = { 
+            'A4': { w: 210, h: 297 }, 
+            'A5': { w: 148, h: 210 }, 
+            'A6': { w: 105, h: 148 } 
+        };
+
+        function updatePaper() {
+            const size = document.getElementById('paperSize').value;
+            const orient = document.getElementById('paperOrient').value;
+            const preview = document.getElementById('paperPreview');
+            
+            let w = paperDims[size].w;
+            let h = paperDims[size].h;
+            
+            if(orient === 'l') { [w, h] = [h, w]; }
+
+            const scale = 1.4; // Screen zoom
+            preview.style.width = (w * scale) + "px";
+            preview.style.height = (h * scale) + "px";
+            updatePreview();
+        }
+
+        document.getElementById('imgInp').onchange = e => {
+            const file = e.target.files[0];
+            if(!file) return;
+            const reader = new FileReader();
+            reader.onload = event => {
+                document.getElementById('cropImgTarget').src = event.target.result;
+                document.getElementById('cropModal').style.display = 'flex';
+                if(cropper) cropper.destroy();
+                const dim = document.getElementById('photoSize').value.split('-');
+                cropper = new Cropper(document.getElementById('cropImgTarget'), {
+                    aspectRatio: dim[0] / dim[1],
+                    viewMode: 1,
+                    rotatable: true
+                });
+            };
+            reader.readAsDataURL(file);
+        };
+
+        function rotatePhoto(deg) { if(cropper) cropper.rotate(deg); }
+        function closeModal() { document.getElementById('cropModal').style.display = 'none'; }
+
+        function applyCrop() {
+            croppedBase64 = cropper.getCroppedCanvas({ width: 600 }).toDataURL('image/jpeg', 0.9);
+            closeModal();
+            updatePreview();
+        }
+
+        function updatePreview() {
+            const preview = document.getElementById('paperPreview');
+            preview.innerHTML = '';
+            if(!croppedBase64) return;
+
+            const size = document.getElementById('paperSize').value;
+            const orient = document.getElementById('paperOrient').value;
+            let paperW = paperDims[size].w;
+            if(orient === 'l') paperW = paperDims[size].h;
+
+            const photoDim = document.getElementById('photoSize').value.split('-');
+            const pw = parseInt(photoDim[0]);
+            const ph = parseInt(photoDim[1]);
+            const copies = parseInt(document.getElementById('copies').value);
+            const name = document.getElementById('userName').value;
+            const dop = document.getElementById('userDOP').value;
+
+            let x = 7; let y = 7;
+            const scale = 1.4;
+
+            for(let i=0; i < copies; i++) {
+                const box = document.createElement('div');
+                box.className = "photo-box";
+                box.style.width = (pw * scale) + "px";
+                box.style.height = (ph * scale) + "px";
+                box.style.left = (x * scale) + "px";
+                box.style.top = (y * scale) + "px";
+                box.style.backgroundImage = `url(${croppedBase64})`;
+
+                if(name || dop) {
+                    const label = document.createElement('div');
+                    label.className = "label-text";
+                    label.innerHTML = `${name}<br>${dop}`;
+                    box.appendChild(label);
+                }
+
+                preview.appendChild(box);
+                x += pw + 3;
+                if((x + pw) > paperW - 5) { x = 7; y += ph + 4; }
+            }
+        }
+
+        function downloadPDF() {
+            if(!croppedBase64) return alert("Pehle photo upload karke crop karo!");
+            const size = document.getElementById('paperSize').value;
+            const orient = document.getElementById('paperOrient').value;
+            const photoDim = document.getElementById('photoSize').value.split('-');
+            const pw = parseInt(photoDim[0]);
+            const ph = parseInt(photoDim[1]);
+            const copies = parseInt(document.getElementById('copies').value);
+            
+            const pdf = new jsPDF(orient, 'mm', size.toLowerCase());
+            let paperW = pdf.internal.pageSize.getWidth();
+            let x = 10; let y = 10;
+
+            for(let i=0; i < copies; i++) {
+                pdf.addImage(croppedBase64, 'JPEG', x, y, pw, ph);
+                const name = document.getElementById('userName').value;
+                const dop = document.getElementById('userDOP').value;
+                if(name || dop) {
+                    pdf.setFillColor(255, 255, 255);
+                    pdf.rect(x, y + ph - 8, pw, 8, 'F');
+                    pdf.setFontSize(7);
+                    pdf.text(name, x + pw/2, y + ph - 5, { align: 'center' });
+                    pdf.text(dop, x + pw/2, y + ph - 2, { align: 'center' });
+                }
+                x += pw + 4;
+                if(x + pw > paperW - 10) { x = 10; y += ph + 5; }
+            }
+            pdf.save("Studio_Print.pdf");
+        }
+        updatePaper();
+    </script>
+</body>
+</html>
