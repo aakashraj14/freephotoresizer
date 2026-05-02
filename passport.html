@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Pro Photo Studio - Border & Print Fixed</title>
+    <title>Pro Studio - Live Preview & Ad Fix</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet" />
@@ -12,30 +12,20 @@
     <style>
         body { font-family: 'Inter', sans-serif; background: #0f172a; color: white; }
         #paperPreview { 
-            background: white; 
-            margin: 20px auto; 
+            background: white; margin: 20px auto; 
             box-shadow: 0 10px 40px rgba(0,0,0,0.6); 
-            position: relative; 
-            overflow: hidden; 
-            border: 2px solid #3b82f6;
-            transition: all 0.4s ease;
+            position: relative; overflow: hidden; border: 2px solid #3b82f6;
+            transition: 0.3s;
         }
         .photo-box { 
-            position: absolute; 
-            /* Border Fixed: Yahan black border add kiya hai */
-            border: 1px solid #000; 
-            background-size: cover; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            justify-content: flex-end; 
-            box-sizing: border-box;
+            position: absolute; border: 1px solid #000; 
+            background-size: cover; display: flex; flex-direction: column; 
+            align-items: center; justify-content: flex-end; box-sizing: border-box;
         }
         .label-text { 
             color: black; font-size: 7px; font-weight: bold; 
             background: rgba(255,255,255,0.95); width: 100%; 
-            text-align: center; line-height: 1.2; padding: 1px 0;
-            border-top: 1px solid #000;
+            text-align: center; line-height: 1.1; padding: 1px 0; border-top: 1px solid #000;
         }
         .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 100; display: none; align-items: center; justify-content: center; padding: 15px; }
         .modal-content { background: #1e293b; padding: 20px; border-radius: 16px; max-width: 450px; width: 100%; }
@@ -44,9 +34,9 @@
 </head>
 <body class="p-4">
 
-    <!-- Future Ad Section -->
-    <div class="max-w-6xl mx-auto h-16 bg-slate-800/40 border border-dashed border-slate-600 rounded-xl mb-6 flex items-center justify-center text-slate-500 text-xs italic">
-        PUBLICITY / AD BANNER SPACE
+    <!-- 📢 Ad Banner Section (Wapas aa gaya) -->
+    <div class="max-w-6xl mx-auto h-20 bg-slate-800 border border-dashed border-slate-600 rounded-xl mb-6 flex items-center justify-center text-slate-400 text-sm italic shadow-inner">
+        AD BANNER SPACE (Future AdSense Placement)
     </div>
 
     <div class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -72,7 +62,7 @@
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-slate-400 uppercase mb-2">Photo Type</label>
+                    <label class="block text-xs font-semibold text-slate-400 uppercase mb-2">Photo Size</label>
                     <select id="photoSize" class="w-full bg-slate-900 border border-slate-600 p-3 rounded-lg text-sm" onchange="updatePreview()">
                         <option value="35-45">Passport (3.5x4.5 cm)</option>
                         <option value="101-152">Postcard (4x6 inch)</option>
@@ -81,47 +71,40 @@
                 </div>
 
                 <div class="grid grid-cols-2 gap-2">
-                    <input type="text" id="userName" placeholder="Name" class="bg-slate-900 border border-slate-600 p-3 rounded-lg text-sm" oninput="updatePreview()">
-                    <input type="text" id="userDOP" placeholder="Date/DOP" class="bg-slate-900 border border-slate-600 p-3 rounded-lg text-sm" oninput="updatePreview()">
+                    <input type="text" id="userName" placeholder="Full Name" class="bg-slate-900 border border-slate-600 p-3 rounded-lg text-sm" oninput="updatePreview()">
+                    <input type="text" id="userDOP" placeholder="Date (DOP)" class="bg-slate-900 border border-slate-600 p-3 rounded-lg text-sm" oninput="updatePreview()">
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-slate-400 uppercase mb-2">Copies</label>
-                    <input type="number" id="copies" value="8" min="1" max="60" class="w-full bg-slate-900 border border-slate-600 p-3 rounded-lg text-sm" onchange="updatePreview()">
+                    <label class="block text-xs font-semibold text-slate-400 uppercase mb-2">Number of Copies</label>
+                    <input type="number" id="copies" value="8" min="1" max="60" class="w-full bg-slate-900 border border-slate-600 p-3 rounded-lg text-sm font-bold text-blue-400" oninput="updatePreview()">
+                    <p class="text-[10px] text-slate-500 mt-1">* Number badalte hi images apne aap badh jayengi</p>
                 </div>
             </div>
 
             <div class="pt-4 space-y-3">
                 <input type="file" id="imgInp" class="hidden" accept="image/*">
-                <button onclick="document.getElementById('imgInp').click()" class="w-full bg-blue-600 hover:bg-blue-500 py-3 rounded-xl font-bold transition-all shadow-lg shadow-blue-900/30">📁 Select & Crop Photo</button>
-                <button onclick="downloadPDF()" class="w-full bg-emerald-600 hover:bg-emerald-500 py-3 rounded-xl font-bold transition-all shadow-lg shadow-emerald-900/30">📥 Download Print PDF</button>
+                <button onclick="document.getElementById('imgInp').click()" class="w-full bg-blue-600 hover:bg-blue-500 py-3 rounded-xl font-bold transition-all shadow-lg">📁 Upload & Crop Photo</button>
+                <button onclick="downloadPDF()" class="w-full bg-emerald-600 hover:bg-emerald-500 py-3 rounded-xl font-bold transition-all shadow-lg">📥 Download Print PDF</button>
             </div>
         </div>
 
         <!-- Main Preview -->
         <div class="lg:col-span-2 flex flex-col items-center">
-            <p class="text-xs text-slate-400 mb-4 uppercase tracking-widest">Live Canvas Preview (With Borders)</p>
             <div id="paperPreview"></div>
         </div>
     </div>
 
-    <!-- Crop & Rotate Modal -->
+    <!-- Crop Modal -->
     <div id="cropModal" class="modal">
         <div class="modal-content">
-            <h3 class="text-lg font-bold mb-4 text-center">Adjust Photo</h3>
-            <div class="cropper-container mb-4">
-                <img id="cropImgTarget" src="">
-            </div>
-            
+            <h3 class="text-lg font-bold mb-4 text-center">Crop & Rotate</h3>
+            <div class="cropper-container mb-4"><img id="cropImgTarget" src=""></div>
             <div class="grid grid-cols-2 gap-3 mb-5">
-                <button onclick="rotatePhoto(-90)" class="bg-slate-700 py-2 rounded-lg hover:bg-slate-600">↺ Rotate Left</button>
-                <button onclick="rotatePhoto(90)" class="bg-slate-700 py-2 rounded-lg hover:bg-slate-600">↻ Rotate Right</button>
+                <button onclick="cropper.rotate(-90)" class="bg-slate-700 py-2 rounded">↺ Left</button>
+                <button onclick="cropper.rotate(90)" class="bg-slate-700 py-2 rounded">↻ Right</button>
             </div>
-
-            <div class="flex gap-3">
-                <button onclick="closeModal()" class="flex-1 bg-slate-600 py-3 rounded-xl font-semibold">Cancel</button>
-                <button onclick="applyCrop()" class="flex-1 bg-blue-600 py-3 rounded-xl font-bold">Apply Crop</button>
-            </div>
+            <button onclick="applyCrop()" class="w-full bg-blue-600 py-3 rounded-xl font-bold">Apply & See Preview</button>
         </div>
     </div>
 
@@ -130,20 +113,16 @@
         let cropper = null;
         let croppedBase64 = null;
         
-        const paperDims = { 
-            'A4': { w: 210, h: 297 }, 
-            'A5': { w: 148, h: 210 }, 
-            'A6': { w: 105, h: 148 } 
-        };
+        const paperDims = { 'A4': { w: 210, h: 297 }, 'A5': { w: 148, h: 210 }, 'A6': { w: 105, h: 148 } };
 
         function updatePaper() {
             const size = document.getElementById('paperSize').value;
             const orient = document.getElementById('paperOrient').value;
+            let w = paperDims[size].w; let h = paperDims[size].h;
+            if(orient === 'l') [w, h] = [h, w];
+            
+            const scale = 1.4;
             const preview = document.getElementById('paperPreview');
-            let w = paperDims[size].w;
-            let h = paperDims[size].h;
-            if(orient === 'l') { [w, h] = [h, w]; }
-            const scale = 1.4; 
             preview.style.width = (w * scale) + "px";
             preview.style.height = (h * scale) + "px";
             updatePreview();
@@ -159,20 +138,15 @@
                 if(cropper) cropper.destroy();
                 const dim = document.getElementById('photoSize').value.split('-');
                 cropper = new Cropper(document.getElementById('cropImgTarget'), {
-                    aspectRatio: dim[0] / dim[1],
-                    viewMode: 1,
-                    rotatable: true
+                    aspectRatio: dim[0] / dim[1], viewMode: 1
                 });
             };
             reader.readAsDataURL(file);
         };
 
-        function rotatePhoto(deg) { if(cropper) cropper.rotate(deg); }
-        function closeModal() { document.getElementById('cropModal').style.display = 'none'; }
-
         function applyCrop() {
             croppedBase64 = cropper.getCroppedCanvas({ width: 600 }).toDataURL('image/jpeg', 0.9);
-            closeModal();
+            document.getElementById('cropModal').style.display = 'none';
             updatePreview();
         }
 
@@ -183,8 +157,7 @@
 
             const size = document.getElementById('paperSize').value;
             const orient = document.getElementById('paperOrient').value;
-            let paperW = paperDims[size].w;
-            if(orient === 'l') paperW = paperDims[size].h;
+            let paperW = paperDims[size].w; if(orient === 'l') paperW = paperDims[size].h;
 
             const photoDim = document.getElementById('photoSize').value.split('-');
             const pw = parseInt(photoDim[0]);
@@ -193,11 +166,10 @@
             const name = document.getElementById('userName').value;
             const dop = document.getElementById('userDOP').value;
 
-            // Margin aur Spacing set kiya hai
             let x = 10; let y = 10;
             const scale = 1.4;
 
-            for(let i=0; i < copies; i++) {
+            for(let i=0; i<copies; i++) {
                 const box = document.createElement('div');
                 box.className = "photo-box";
                 box.style.width = (pw * scale) + "px";
@@ -214,8 +186,7 @@
                 }
 
                 preview.appendChild(box);
-                // Photos ke beech mein 4mm ka gap
-                x += pw + 4; 
+                x += pw + 4;
                 if((x + pw) > paperW - 8) { x = 10; y += ph + 6; }
             }
         }
@@ -233,27 +204,20 @@
             let paperW = pdf.internal.pageSize.getWidth();
             let x = 10; let y = 10;
 
-            for(let i=0; i < copies; i++) {
-                // PDF mein saaf border ke liye rectangle
-                pdf.setDrawColor(0, 0, 0);
-                pdf.setLineWidth(0.2);
-                pdf.rect(x, y, pw, ph);
-                
+            for(let i=0; i<copies; i++) {
+                pdf.setDrawColor(0); pdf.rect(x, y, pw, ph);
                 pdf.addImage(croppedBase64, 'JPEG', x, y, pw, ph);
                 const name = document.getElementById('userName').value;
                 const dop = document.getElementById('userDOP').value;
                 if(name || dop) {
-                    pdf.setFillColor(255, 255, 255);
-                    pdf.rect(x + 0.2, y + ph - 8, pw - 0.4, 7.8, 'F');
-                    pdf.setFontSize(7);
-                    pdf.setTextColor(0);
-                    pdf.text(name, x + pw/2, y + ph - 5, { align: 'center' });
-                    pdf.text(dop, x + pw/2, y + ph - 2, { align: 'center' });
+                    pdf.setFillColor(255); pdf.rect(x+0.1, y+ph-8, pw-0.2, 7.8, 'F');
+                    pdf.setFontSize(7); pdf.text(name, x+pw/2, y+ph-5, {align:'center'});
+                    pdf.text(dop, x+pw/2, y+ph-2, {align:'center'});
                 }
-                x += pw + 5;
+                x += pw + 4;
                 if(x + pw > paperW - 8) { x = 10; y += ph + 6; }
             }
-            pdf.save("Studio_Print_Bordered.pdf");
+            pdf.save("Studio_Print.pdf");
         }
         updatePaper();
     </script>
